@@ -7,7 +7,7 @@ import java.time.LocalDate;
 import java.time.Period;
 
 @Entity
-@Table(name = "patients")
+@Table(name = "patient")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

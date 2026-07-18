@@ -1,0 +1,9 @@
+package com.forensys.backend.repository;
+
+import com.forensys.backend.entity.MlefRecord;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface MlefRecordRepository extends JpaRepository<MlefRecord, Long> {
+}
