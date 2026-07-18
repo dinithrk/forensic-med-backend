@@ -31,8 +31,9 @@ public class Patient {
     @Transient
     private Integer age;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "sex")
-    private String sex;
+    private com.forensys.backend.entity.enums.Gender sex;
 
     @Embedded
     private Identification identification;
