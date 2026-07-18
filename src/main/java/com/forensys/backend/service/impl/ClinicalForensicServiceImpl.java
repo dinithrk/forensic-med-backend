@@ -29,12 +29,20 @@ public class ClinicalForensicServiceImpl implements ClinicalForensicService {
     private final IndividualInjuryRepository injuryRepository;
     private final ReferralRepository referralRepository;
     private final MlrReportRepository mlrReportRepository;
+    private final com.forensys.backend.repository.PatientRepository patientRepository;
     private final ClinicalForensicMapper mapper;
 
     @Override
     @Transactional
     public MlefRecordDto createMlefRecord(MlefRecordDto dto) {
         MlefRecord mlefRecord = mapper.toEntity(dto);
+        
+        if (dto.getPatientId() != null) {
+            com.forensys.backend.entity.Patient patient = patientRepository.findById(dto.getPatientId())
+                    .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Patient not found"));
+            mlefRecord.setPatient(patient);
+        }
+        
         mlefRecord = mlefRecordRepository.save(mlefRecord);
         final MlefRecord savedRecord = mlefRecord;
 
@@ -71,7 +79,55 @@ public class ClinicalForensicServiceImpl implements ClinicalForensicService {
                 .orElseThrow(() -> new RuntimeException(MLEF_NOT_FOUND_MSG));
         return mapper.toDto(mlefRecordEntity);
     }
+    @Override
+    @Transactional(readOnly = true)
+    public List<MlefRecordDto> getAllMlefRecords() {
+        return mlefRecordRepository.findAll().stream()
+                .map(mapper::toDto)
+                .toList();
+    }
 
+    @Override
+    @Transactional
+    public MlefRecordDto updateMlefRecord(Long mlefId, MlefRecordDto dto) {
+        MlefRecord existingRecord = mlefRecordRepository.findById(mlefId)
+                .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException(MLEF_NOT_FOUND_MSG));
+                
+        mapper.updateEntityFromDto(dto, existingRecord);
+        
+        if (dto.getPatientId() != null) {
+            com.forensys.backend.entity.Patient patient = patientRepository.findById(dto.getPatientId())
+                    .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Patient not found"));
+            existingRecord.setPatient(patient);
+        }
+        
+        injuryRepository.deleteByMlefRecord_MlefId(mlefId);
+        if (dto.getInjuries() != null && !dto.getInjuries().isEmpty()) {
+            List<IndividualInjury> injuries = dto.getInjuries().stream()
+                    .map(iDto -> {
+                        IndividualInjury i = mapper.toEntity(iDto);
+                        i.setMlefRecord(existingRecord);
+                        return i;
+                    })
+                    .toList();
+            injuryRepository.saveAll(injuries);
+        }
+        
+        referralRepository.deleteByMlefRecord_MlefId(mlefId);
+        if (dto.getReferrals() != null && !dto.getReferrals().isEmpty()) {
+            List<Referral> referrals = dto.getReferrals().stream()
+                    .map(rDto -> {
+                        Referral r = mapper.toEntity(rDto);
+                        r.setMlefRecord(existingRecord);
+                        return r;
+                    })
+                    .toList();
+            referralRepository.saveAll(referrals);
+        }
+        
+        MlefRecord saved = mlefRecordRepository.save(existingRecord);
+        return mapper.toDto(saved);
+    }
     @Override
     @Transactional
     public MlrReportDto generateMlrReport(Long mlefId, MlrReportDto dto) {

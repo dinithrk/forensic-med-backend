@@ -23,6 +23,12 @@ public interface ClinicalForensicMapper {
     @Mapping(target = "broughtByOfficer", ignore = true)
     @Mapping(target = "assignedMedicalOfficer", ignore = true)
     MlefRecord toEntity(MlefRecordDto dto);
+    
+    @Mapping(target = "patient", ignore = true)
+    @Mapping(target = "broughtByOfficer", ignore = true)
+    @Mapping(target = "assignedMedicalOfficer", ignore = true)
+    @Mapping(target = "mlefId", ignore = true)
+    void updateEntityFromDto(MlefRecordDto dto, @org.mapstruct.MappingTarget MlefRecord entity);
 
     @Mapping(target = "mlefRecord", ignore = true)
     IndividualInjury toEntity(IndividualInjuryDto dto);

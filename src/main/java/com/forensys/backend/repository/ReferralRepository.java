@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ReferralRepository extends JpaRepository<Referral, Long> {
+    void deleteByMlefRecord_MlefId(Long mlefId);
 }

@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface IndividualInjuryRepository extends JpaRepository<IndividualInjury, Long> {
+    void deleteByMlefRecord_MlefId(Long mlefId);
 }
