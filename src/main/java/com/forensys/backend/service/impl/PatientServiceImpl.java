@@ -8,6 +8,7 @@ import com.forensys.backend.service.PatientService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import jakarta.persistence.EntityNotFoundException;
 
 import java.util.List;
 
@@ -31,7 +32,7 @@ public class PatientServiceImpl implements PatientService {
     public PatientDto getPatientById(Long id) {
         return patientRepository.findById(id)
                 .map(patientMapper::toDto)
-                .orElseThrow(() -> new RuntimeException("Patient not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Patient not found"));
     }
 
     @Override
@@ -46,14 +47,21 @@ public class PatientServiceImpl implements PatientService {
     @Transactional
     public PatientDto updatePatient(Long id, PatientDto patientDto) {
         Patient patient = patientRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Patient not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Patient not found"));
         
         patient.setFullName(patientDto.getFullName());
         patient.setAddress(patientDto.getAddress());
         patient.setDateOfBirth(patientDto.getDateOfBirth());
         patient.setSex(patientDto.getSex());
         patient.setConsentGiven(patientDto.getConsentGiven());
-        // Handle identification correctly depending on requirements
+        
+        com.forensys.backend.entity.Identification identification = patient.getIdentification();
+        if (identification == null) {
+            identification = new com.forensys.backend.entity.Identification();
+        }
+        identification.setNicNo(patientDto.getNicNo());
+        identification.setPassportNo(patientDto.getPassportNo());
+        patient.setIdentification(identification);
         
         patient = patientRepository.save(patient);
         return patientMapper.toDto(patient);
