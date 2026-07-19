@@ -35,4 +35,10 @@ public class Deceased {
 
     private LocalDate dateOfDeath;
     private LocalTime timeOfDeath;
+
+    @OneToOne(mappedBy = "deceased", cascade = CascadeType.ALL, orphanRemoval = true)
+    private InquestOrder inquestOrder;
+
+    @OneToMany(mappedBy = "deceased", cascade = CascadeType.ALL, orphanRemoval = true)
+    private java.util.List<Identifier> identifiers;
 }

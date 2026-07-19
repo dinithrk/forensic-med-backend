@@ -15,8 +15,12 @@ public interface AutopsyMapper {
     DeceasedDto toDto(Deceased deceased);
     Deceased toEntity(DeceasedDto dto);
 
+    @Mapping(source = "deceased.deceasedId", target = "deceasedId")
+    @Mapping(target = "medicalOfficerIds", expression = "java(pm.getMedicalOfficers() != null ? pm.getMedicalOfficers().stream().map(com.forensys.backend.entity.MedicalOfficer::getOfficerId).toList() : null)")
     PostMortemDto toDto(PostMortem pm);
+    
     @Mapping(target = "medicalOfficers", ignore = true)
+    @Mapping(target = "deceased", ignore = true)
     PostMortem toEntity(PostMortemDto dto);
 
     @Mapping(target = "postMortem", ignore = true)

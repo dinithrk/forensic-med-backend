@@ -1,7 +1,6 @@
 package com.forensys.backend.controller;
 
 import com.forensys.backend.dto.AutopsyExamDto;
-import com.forensys.backend.dto.DeceasedDto;
 import com.forensys.backend.dto.PostMortemDto;
 import com.forensys.backend.service.AutopsyService;
 import lombok.RequiredArgsConstructor;
@@ -11,27 +10,34 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/autopsies")
+@RequestMapping("/api/v1/deceased/{deceasedId}/post-mortems")
 @RequiredArgsConstructor
 public class AutopsyController {
 
     private final AutopsyService autopsyService;
 
-    @PostMapping("/deceased")
-    @PreAuthorize("hasAnyRole('JMO', 'MEDICAL_OFFICER')")
-    public ResponseEntity<DeceasedDto> registerDeceased(@RequestBody DeceasedDto dto) {
-        return new ResponseEntity<>(autopsyService.registerDeceased(dto), HttpStatus.CREATED);
-    }
-
-    @PostMapping("/post-mortem")
-    @PreAuthorize("hasAnyRole('JMO', 'MEDICAL_OFFICER')")
-    public ResponseEntity<PostMortemDto> createPostMortem(@RequestBody PostMortemDto dto) {
+    @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'JMO', 'MEDICAL_OFFICER')")
+    public ResponseEntity<PostMortemDto> createPostMortem(@PathVariable Long deceasedId, @RequestBody PostMortemDto dto) {
+        dto.setDeceasedId(deceasedId);
         return new ResponseEntity<>(autopsyService.createPostMortem(dto), HttpStatus.CREATED);
     }
 
-    @PutMapping("/post-mortem/{pmSerialNo}/finalize")
-    @PreAuthorize("hasAnyRole('JMO', 'MEDICAL_OFFICER')")
-    public ResponseEntity<PostMortemDto> finalizeAutopsyExam(@PathVariable Long pmSerialNo, @RequestBody AutopsyExamDto dto) {
+    @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'JMO', 'MEDICAL_OFFICER', 'CLERICAL_OFFICER')")
+    public ResponseEntity<java.util.List<PostMortemDto>> getAllPostMortemsForDeceased(@PathVariable Long deceasedId) {
+        return ResponseEntity.ok(autopsyService.getAllPostMortemsForDeceased(deceasedId));
+    }
+
+    @GetMapping("/{pmSerialNo}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'JMO', 'MEDICAL_OFFICER', 'CLERICAL_OFFICER')")
+    public ResponseEntity<PostMortemDto> getPostMortemById(@PathVariable Long deceasedId, @PathVariable Long pmSerialNo) {
+        return ResponseEntity.ok(autopsyService.getPostMortemById(pmSerialNo));
+    }
+
+    @PutMapping("/{pmSerialNo}/finalize")
+    @PreAuthorize("hasAnyRole('ADMIN', 'JMO', 'MEDICAL_OFFICER')")
+    public ResponseEntity<PostMortemDto> finalizeAutopsyExam(@PathVariable Long deceasedId, @PathVariable Long pmSerialNo, @RequestBody AutopsyExamDto dto) {
         return ResponseEntity.ok(autopsyService.finalizeAutopsyExam(pmSerialNo, dto));
     }
 }

@@ -31,4 +31,14 @@ public class PostMortem {
             inverseJoinColumns = @JoinColumn(name = "officer_id")
     )
     private Set<MedicalOfficer> medicalOfficers;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "deceased_id")
+    private Deceased deceased;
+
+    @OneToOne(mappedBy = "postMortem", cascade = CascadeType.ALL, orphanRemoval = true)
+    private AutopsyExam autopsyExam;
+
+    @OneToMany(mappedBy = "postMortem", cascade = CascadeType.ALL, orphanRemoval = true)
+    private java.util.List<PreAutopsyInformation> preAutopsyInformation;
 }

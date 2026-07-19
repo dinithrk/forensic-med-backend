@@ -16,6 +16,8 @@ public class PostMortemDto {
     private Boolean underInvestigation;
     private Boolean specimensRetained;
     
+    private Long deceasedId;
+    
     // M:N relationship IDs
     private List<Long> medicalOfficerIds;
     
