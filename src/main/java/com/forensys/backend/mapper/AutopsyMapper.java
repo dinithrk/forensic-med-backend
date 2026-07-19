@@ -8,12 +8,18 @@ import com.forensys.backend.entity.Deceased;
 import com.forensys.backend.entity.PostMortem;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
 
 @Mapper(componentModel = "spring")
 public interface AutopsyMapper {
 
     DeceasedDto toDto(Deceased deceased);
     Deceased toEntity(DeceasedDto dto);
+    
+    @Mapping(target = "deceasedId", ignore = true)
+    @Mapping(target = "inquestOrder", ignore = true)
+    @Mapping(target = "identifiers", ignore = true)
+    void updateDeceasedFromDto(DeceasedDto dto, @MappingTarget Deceased entity);
 
     @Mapping(source = "deceased.deceasedId", target = "deceasedId")
     @Mapping(target = "medicalOfficerIds", expression = "java(pm.getMedicalOfficers() != null ? pm.getMedicalOfficers().stream().map(com.forensys.backend.entity.MedicalOfficer::getOfficerId).toList() : null)")
@@ -22,6 +28,11 @@ public interface AutopsyMapper {
     @Mapping(target = "medicalOfficers", ignore = true)
     @Mapping(target = "deceased", ignore = true)
     PostMortem toEntity(PostMortemDto dto);
+    
+    @Mapping(target = "pmSerialNo", ignore = true)
+    @Mapping(target = "medicalOfficers", ignore = true)
+    @Mapping(target = "deceased", ignore = true)
+    void updatePostMortemFromDto(PostMortemDto dto, @MappingTarget PostMortem entity);
 
     @Mapping(target = "postMortem", ignore = true)
     AutopsyExam toEntity(AutopsyExamDto dto);

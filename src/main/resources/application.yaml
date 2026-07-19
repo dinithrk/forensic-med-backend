@@ -3,13 +3,13 @@ spring:
     name: backend
   datasource:
     url: jdbc:postgresql://localhost:5432/forensys_catalog
-    username: postgres
-    password: dinith123
+    username: kernelx
+    password: kernelx
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         format_sql: true

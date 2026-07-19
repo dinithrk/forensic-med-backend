@@ -34,4 +34,10 @@ public class DeceasedController {
     public ResponseEntity<DeceasedDto> getDeceasedById(@PathVariable Long id) {
         return ResponseEntity.ok(autopsyService.getDeceasedById(id));
     }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'JMO', 'MEDICAL_OFFICER')")
+    public ResponseEntity<DeceasedDto> updateDeceased(@PathVariable Long id, @RequestBody DeceasedDto dto) {
+        return ResponseEntity.ok(autopsyService.updateDeceased(id, dto));
+    }
 }

@@ -35,6 +35,15 @@ public class AutopsyController {
         return ResponseEntity.ok(autopsyService.getPostMortemById(pmSerialNo));
     }
 
+    @PutMapping("/{pmSerialNo}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'JMO', 'MEDICAL_OFFICER')")
+    public ResponseEntity<PostMortemDto> updatePostMortem(
+            @PathVariable Long deceasedId, 
+            @PathVariable Long pmSerialNo, 
+            @RequestBody PostMortemDto dto) {
+        return ResponseEntity.ok(autopsyService.updatePostMortem(deceasedId, pmSerialNo, dto));
+    }
+
     @PutMapping("/{pmSerialNo}/finalize")
     @PreAuthorize("hasAnyRole('ADMIN', 'JMO', 'MEDICAL_OFFICER')")
     public ResponseEntity<PostMortemDto> finalizeAutopsyExam(@PathVariable Long deceasedId, @PathVariable Long pmSerialNo, @RequestBody AutopsyExamDto dto) {

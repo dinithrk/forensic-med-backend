@@ -10,10 +10,12 @@ public interface AutopsyService {
     DeceasedDto registerDeceased(DeceasedDto deceasedDto);
     List<DeceasedDto> getAllDeceased();
     DeceasedDto getDeceasedById(Long id);
+    DeceasedDto updateDeceased(Long id, DeceasedDto dto);
     
     PostMortemDto createPostMortem(PostMortemDto postMortemDto);
     List<PostMortemDto> getAllPostMortemsForDeceased(Long deceasedId);
     PostMortemDto getPostMortemById(Long pmSerialNo);
+    PostMortemDto updatePostMortem(Long deceasedId, Long pmId, PostMortemDto dto);
     
     PostMortemDto finalizeAutopsyExam(Long pmSerialNo, AutopsyExamDto autopsyExamDto);
 }
