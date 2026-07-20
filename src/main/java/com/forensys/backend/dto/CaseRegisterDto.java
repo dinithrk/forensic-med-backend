@@ -4,7 +4,6 @@ import com.forensys.backend.entity.enums.SubjectType;
 import lombok.*;
 
 import java.time.LocalDate;
-import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -18,6 +17,4 @@ public class CaseRegisterDto {
     private LocalDate dateOfDeath;
     private LocalDate dateOfAutopsy;
 
-    // Nested children
-    private List<ForensicSampleDto> forensicSamples;
 }

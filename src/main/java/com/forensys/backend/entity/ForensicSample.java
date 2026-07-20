@@ -3,6 +3,8 @@ package com.forensys.backend.entity;
 import com.forensys.backend.entity.enums.SpecimenType;
 import jakarta.persistence.*;
 import lombok.*;
+import java.time.LocalDate;
+import java.util.List;
 
 @Entity
 @Table(name = "forensic_sample")
@@ -23,12 +25,18 @@ public class ForensicSample {
     private Integer numberOfTissues;
     private String productionNumber;
     private String referredInstitution;
+    
+    private LocalDate collectionDate;
+    private String collectedBy;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "register_id")
-    private CaseRegister caseRegister;
+    @JoinColumn(name = "mlef_id")
+    private MlefRecord clinicalCase;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "autopsy_id")
     private AutopsyExam autopsyExam;
+
+    @OneToMany(mappedBy = "forensicSample", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<ChainOfCustody> chainOfCustody;
 }

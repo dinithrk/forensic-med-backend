@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface PostMortemRepository extends JpaRepository<PostMortem, Long> {
+    java.util.List<PostMortem> findTop10ByDeceased_FullNameContainingIgnoreCase(String query);
 }

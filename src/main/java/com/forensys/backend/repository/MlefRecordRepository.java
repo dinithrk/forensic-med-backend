@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface MlefRecordRepository extends JpaRepository<MlefRecord, Long> {
+    java.util.List<MlefRecord> findTop10ByPatient_FullNameContainingIgnoreCase(String query);
 }

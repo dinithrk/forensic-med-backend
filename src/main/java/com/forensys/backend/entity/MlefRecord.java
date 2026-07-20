@@ -7,6 +7,7 @@ import lombok.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.List;
 
 @Entity
 @Table(name = "mlef_record")
@@ -84,4 +85,10 @@ public class MlefRecord {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "medical_officer_id")
     private MedicalOfficer assignedMedicalOfficer;
+
+    @OneToMany(mappedBy = "mlefRecord", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<IndividualInjury> injuries;
+
+    @OneToMany(mappedBy = "mlefRecord", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Referral> referrals;
 }

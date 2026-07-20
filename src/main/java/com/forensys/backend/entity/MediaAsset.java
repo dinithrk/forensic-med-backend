@@ -17,6 +17,7 @@ public class MediaAsset {
     private Long mediaId;
 
     private String filePath;
+    private String fileName;
     private String type;
 
     @ManyToOne(fetch = FetchType.LAZY)
