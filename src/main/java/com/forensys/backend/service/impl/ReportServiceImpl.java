@@ -2,6 +2,7 @@ package com.forensys.backend.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.forensys.backend.dto.ForensicReportDto;
+import com.forensys.backend.dto.ManagementReportDto;
 import com.forensys.backend.dto.ReportNotificationDto;
 import com.forensys.backend.dto.ReportStatusUpdateDto;
 import com.forensys.backend.entity.Deceased;
@@ -40,10 +41,23 @@ public class ReportServiceImpl implements ReportService {
     @Transactional
     public ForensicReportDto autoGenerateReportDraft(String caseType, Long caseId, String reportTypeStr) {
         ReportType reportType;
+        boolean isPostMortemCase = "POSTMORTEM".equalsIgnoreCase(caseType);
+        
         try {
             reportType = ReportType.valueOf(reportTypeStr.toUpperCase());
         } catch (Exception e) {
-            reportType = "POSTMORTEM".equalsIgnoreCase(caseType) ? ReportType.PMR : ReportType.MLR;
+            reportType = isPostMortemCase ? ReportType.PMR : ReportType.MLR;
+        }
+
+        // Enforce strict report restrictions per case type
+        if (isPostMortemCase) {
+            if (reportType != ReportType.PMR && reportType != ReportType.CERTIFICATE_OF_RECEIPT) {
+                reportType = ReportType.PMR;
+            }
+        } else {
+            if (reportType == ReportType.PMR) {
+                reportType = ReportType.MLR;
+            }
         }
 
         ForensicReport report = ForensicReport.builder()
@@ -64,8 +78,14 @@ public class ReportServiceImpl implements ReportService {
             report.setMlefRecord(mlef);
             report.setExaminationDate(mlef.getDateTimeExamined());
             report.setPoliceRefNo(mlef.getPoliceRefNo());
-            report.setSerialNo(reportType == ReportType.CERTIFICATE_OF_RECEIPT ?
-                    "CER-MLEF-" + mlef.getMlefId() : "MLR-2026-" + String.format("%04d", mlef.getMlefId()));
+            
+            if (reportType == ReportType.CERTIFICATE_OF_RECEIPT) {
+                report.setSerialNo("CER-MLEF-" + mlef.getMlefId());
+            } else if (reportType == ReportType.MLEF) {
+                report.setSerialNo("MLEF-2026-" + String.format("%04d", mlef.getMlefId()));
+            } else {
+                report.setSerialNo("MLR-2026-" + String.format("%04d", mlef.getMlefId()));
+            }
 
             Patient patient = mlef.getPatient();
             if (patient != null) {
@@ -79,6 +99,18 @@ public class ReportServiceImpl implements ReportService {
                 detailsMap.put("hospitalNo", mlef.getHospitalBhtNo());
             }
 
+            detailsMap.put("policeDateOfIssue", mlef.getPoliceDateOfIssue());
+            if (mlef.getBroughtByOfficer() != null) {
+                detailsMap.put("broughtByOfficerName", mlef.getBroughtByOfficer().getName());
+                detailsMap.put("broughtByOfficerRank", mlef.getBroughtByOfficer().getRank());
+                detailsMap.put("broughtByOfficerRegNo", mlef.getBroughtByOfficer().getRegNo());
+                detailsMap.put("broughtByOfficerStation", mlef.getBroughtByOfficer().getPoliceStation());
+            }
+
+            detailsMap.put("dateAdmitted", mlef.getDateAdmitted());
+            detailsMap.put("timeAdmitted", mlef.getTimeAdmitted());
+            detailsMap.put("dateDischarged", mlef.getDateDischarged());
+
             detailsMap.put("shortHistory", mlef.getShortHistoryGivenByPatient());
             detailsMap.put("placeExamined", mlef.getPlaceExamined());
             detailsMap.put("reasonForReferral", mlef.getReasonForReferral());
@@ -86,6 +118,51 @@ public class ReportServiceImpl implements ReportService {
             detailsMap.put("hospitalWard", mlef.getHospitalWard());
             detailsMap.put("hospitalBhtNo", mlef.getHospitalBhtNo());
             detailsMap.put("remarks", mlef.getRemarks());
+
+            // Alcohol & Drug details
+            detailsMap.put("breathingSmellIntensity", mlef.getBreathingSmellIntensity());
+            detailsMap.put("alcoholInfluence", mlef.getAlcoholInfluence() != null ? mlef.getAlcoholInfluence().name() : null);
+            detailsMap.put("drugConsumed", mlef.getDrugConsumed());
+            detailsMap.put("drugInfluence", mlef.getDrugInfluence() != null ? mlef.getDrugInfluence().name() : null);
+
+            // Sexual Assault details
+            detailsMap.put("sexualAssaultBriefHistory", mlef.getSexualAssaultBriefHistory());
+            detailsMap.put("signsVaginalHymenPenetration", mlef.getSignsVaginalHymenPenetration());
+            detailsMap.put("signsAnalPenetration", mlef.getSignsAnalPenetration());
+            detailsMap.put("signsInterLabialPenetration", mlef.getSignsInterLabialPenetration());
+            detailsMap.put("otherOpinionsRecommendations", mlef.getOtherOpinionsRecommendations());
+
+            // Nature of bodily harm flags
+            Map<String, Boolean> bodilyHarmMap = new HashMap<>();
+            bodilyHarmMap.put("Abrasion", mlef.getInjuryAbrasion());
+            bodilyHarmMap.put("Contusion", mlef.getInjuryContusion());
+            bodilyHarmMap.put("Laceration", mlef.getInjuryLaceration());
+            bodilyHarmMap.put("Stab", mlef.getInjuryStab());
+            bodilyHarmMap.put("Cut", mlef.getInjuryCut());
+            bodilyHarmMap.put("Fracture", mlef.getInjuryFracture());
+            bodilyHarmMap.put("Firearm", mlef.getInjuryFirearm());
+            bodilyHarmMap.put("Burns", mlef.getInjuryBurns());
+            bodilyHarmMap.put("Bite", mlef.getInjuryBite());
+            bodilyHarmMap.put("Dislocation", mlef.getInjuryDislocation());
+            bodilyHarmMap.put("Explosive", mlef.getInjuryExplosive());
+            bodilyHarmMap.put("Internal Injuries", mlef.getInternalInjuries());
+            bodilyHarmMap.put("None", mlef.getInjuryNone());
+            detailsMap.put("bodilyHarmSummary", bodilyHarmMap);
+            detailsMap.put("othersNatureOfHarm", mlef.getOthersNatureOfHarm());
+
+            // Referrals
+            if (mlef.getReferrals() != null && !mlef.getReferrals().isEmpty()) {
+                List<Map<String, Object>> refList = new ArrayList<>();
+                mlef.getReferrals().forEach(ref -> {
+                    Map<String, Object> rMap = new HashMap<>();
+                    rMap.put("consultant", ref.getReferredToConsultant());
+                    rMap.put("specialty", ref.getSpecialty());
+                    rMap.put("reason", ref.getReferralReason());
+                    rMap.put("reportReceived", ref.getReportReceivedBack());
+                    refList.add(rMap);
+                });
+                detailsMap.put("referrals", refList);
+            }
 
             // Injuries payload summary
             if (mlef.getInjuries() != null) {
@@ -113,7 +190,9 @@ public class ReportServiceImpl implements ReportService {
                 report.setDoctorDesignation("Judicial Medical Officer");
             }
 
-            report.setOpinion("Based on clinical findings and injury documentation, the injuries described are compatible with the history provided.");
+            report.setOpinion(reportType == ReportType.MLEF ?
+                    "MLEF recorded as per clinical examination findings, physical injury documentation, and toxicology/sobriety assessments." :
+                    "Based on clinical findings and injury documentation, the injuries described are compatible with the history provided.");
 
         } else if ("POSTMORTEM".equalsIgnoreCase(caseType)) {
             PostMortem pm = postMortemRepository.findById(caseId)
@@ -459,5 +538,266 @@ public class ReportServiceImpl implements ReportService {
             return r.getPostMortem().getDeceased().getFullName();
         }
         return "N/A";
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ManagementReportDto.DailyReport getDailyReport(String dateStr) {
+        LocalDate targetDate = (dateStr != null && !dateStr.isBlank()) ? LocalDate.parse(dateStr) : LocalDate.now();
+        List<ManagementReportDto.DailyCaseItem> items = new ArrayList<>();
+
+        // Clinical MLEF records examined on target date
+        List<MlefRecord> mlefList = mlefRecordRepository.findAll();
+        for (MlefRecord m : mlefList) {
+            if (m.getDateTimeExamined() != null && m.getDateTimeExamined().toLocalDate().equals(targetDate)) {
+                String patientName = m.getPatient() != null ? m.getPatient().getFullName() : "Patient #" + m.getMlefId();
+                String docName = m.getAssignedMedicalOfficer() != null ? m.getAssignedMedicalOfficer().getFullName() : "Unassigned";
+                items.add(ManagementReportDto.DailyCaseItem.builder()
+                        .caseType("CLINICAL")
+                        .caseId(m.getMlefId())
+                        .referenceNo("MLEF-" + m.getMlefId())
+                        .subjectName(patientName)
+                        .policeStation(m.getPoliceRefNo() != null ? m.getPoliceRefNo() : "N/A")
+                        .dateTimeExamined(m.getDateTimeExamined().toString())
+                        .doctorName(docName)
+                        .status("EXAMINED")
+                        .build());
+            }
+        }
+
+        // PostMortem records examined on target date
+        List<PostMortem> pmList = postMortemRepository.findAll();
+        for (PostMortem pm : pmList) {
+            if (pm.getDateTimeOfPmExam() != null && pm.getDateTimeOfPmExam().toLocalDate().equals(targetDate)) {
+                String deceasedName = pm.getDeceased() != null ? pm.getDeceased().getFullName() : "Deceased #" + pm.getPmSerialNo();
+                String docName = (pm.getMedicalOfficers() != null && !pm.getMedicalOfficers().isEmpty()) ?
+                        pm.getMedicalOfficers().iterator().next().getFullName() : "Unassigned Pathologist";
+                items.add(ManagementReportDto.DailyCaseItem.builder()
+                        .caseType("POSTMORTEM")
+                        .caseId(pm.getPmSerialNo())
+                        .referenceNo("PM-" + pm.getPmSerialNo())
+                        .subjectName(deceasedName)
+                        .policeStation(pm.getDistrict() != null ? pm.getDistrict() : "N/A")
+                        .dateTimeExamined(pm.getDateTimeOfPmExam().toString())
+                        .doctorName(docName)
+                        .status("AUTOPSY EXAMINED")
+                        .build());
+            }
+        }
+
+        int clinicalCount = (int) items.stream().filter(i -> "CLINICAL".equals(i.getCaseType())).count();
+        int pmCount = (int) items.stream().filter(i -> "POSTMORTEM".equals(i.getCaseType())).count();
+
+        return ManagementReportDto.DailyReport.builder()
+                .date(targetDate.toString())
+                .totalClinicalCases(clinicalCount)
+                .totalPostmortemCases(pmCount)
+                .totalCases(items.size())
+                .items(items)
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ManagementReportDto.MonthlyReport getMonthlyReport(Integer year, Integer month) {
+        int targetYear = (year != null) ? year : LocalDate.now().getYear();
+        int targetMonth = (month != null) ? month : LocalDate.now().getMonthValue();
+
+        List<ForensicReport> allReports = reportRepository.findAll();
+        List<ForensicReport> monthlyReports = allReports.stream()
+                .filter(r -> r.getCreatedAt() != null &&
+                        r.getCreatedAt().getYear() == targetYear &&
+                        r.getCreatedAt().getMonthValue() == targetMonth)
+                .toList();
+
+        int clinicalCount = (int) monthlyReports.stream().filter(r -> "CLINICAL".equalsIgnoreCase(r.getCaseType())).count();
+        int pmCount = (int) monthlyReports.stream().filter(r -> "POSTMORTEM".equalsIgnoreCase(r.getCaseType())).count();
+        int finalizedCount = (int) monthlyReports.stream().filter(r -> r.getStatus() == ReportStatus.FINALIZED).count();
+        int dispatchedCount = (int) monthlyReports.stream().filter(r -> r.getStatus() == ReportStatus.DISPATCHED || r.getStatus() == ReportStatus.RECEIPT_CONFIRMED).count();
+
+        // Doctor Workload Map
+        Map<String, int[]> docMap = new HashMap<>(); // [clinicalCount, pmCount]
+        for (ForensicReport r : monthlyReports) {
+            String doc = r.getDoctorName() != null ? r.getDoctorName() : "Unassigned";
+            docMap.putIfAbsent(doc, new int[]{0, 0});
+            if ("POSTMORTEM".equalsIgnoreCase(r.getCaseType())) {
+                docMap.get(doc)[1]++;
+            } else {
+                docMap.get(doc)[0]++;
+            }
+        }
+
+        List<ManagementReportDto.DoctorWorkloadItem> workloadList = new ArrayList<>();
+        docMap.forEach((doc, counts) -> workloadList.add(ManagementReportDto.DoctorWorkloadItem.builder()
+                .doctorName(doc)
+                .clinicalCount(counts[0])
+                .postmortemCount(counts[1])
+                .totalCount(counts[0] + counts[1])
+                .build()));
+
+        // Police Station Distribution
+        Map<String, Integer> stationMap = new HashMap<>();
+        for (ForensicReport r : monthlyReports) {
+            String st = r.getPoliceStation() != null && !r.getPoliceStation().isBlank() ? r.getPoliceStation() : "HQ / Unspecified";
+            stationMap.put(st, stationMap.getOrDefault(st, 0) + 1);
+        }
+
+        List<ManagementReportDto.StationDistributionItem> stationList = new ArrayList<>();
+        stationMap.forEach((st, cnt) -> stationList.add(ManagementReportDto.StationDistributionItem.builder()
+                .policeStation(st)
+                .count(cnt)
+                .build()));
+
+        String monthName = java.time.Month.of(targetMonth).name();
+
+        return ManagementReportDto.MonthlyReport.builder()
+                .year(targetYear)
+                .month(targetMonth)
+                .monthName(monthName)
+                .totalClinical(clinicalCount)
+                .totalPostmortem(pmCount)
+                .totalFinalized(finalizedCount)
+                .totalDispatched(dispatchedCount)
+                .doctorWorkload(workloadList)
+                .stationDistribution(stationList)
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ManagementReportDto.PendingReport getPendingReport() {
+        ReportNotificationDto notificationData = getNotificationWidgetData();
+        return ManagementReportDto.PendingReport.builder()
+                .overdueDraftsCount(notificationData.getOverdueReports() != null ? notificationData.getOverdueReports().size() : 0)
+                .pendingDispatchesCount(notificationData.getPendingDispatches() != null ? notificationData.getPendingDispatches().size() : 0)
+                .overdueDrafts(notificationData.getOverdueReports())
+                .pendingDispatches(notificationData.getPendingDispatches())
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ManagementReportDto.CourtReport getCourtReport() {
+        ReportNotificationDto notificationData = getNotificationWidgetData();
+        List<ForensicReport> confirmedList = reportRepository.findByStatus(ReportStatus.RECEIPT_CONFIRMED);
+
+        return ManagementReportDto.CourtReport.builder()
+                .upcomingTrialsCount(notificationData.getUpcomingCourtDates() != null ? notificationData.getUpcomingCourtDates().size() : 0)
+                .pendingDispatchesCount(notificationData.getPendingDispatches() != null ? notificationData.getPendingDispatches().size() : 0)
+                .receiptConfirmedCount(confirmedList.size())
+                .upcomingTrials(notificationData.getUpcomingCourtDates())
+                .pendingDispatches(notificationData.getPendingDispatches())
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ManagementReportDto.StatisticalReport getStatisticalReport() {
+        List<MlefRecord> mlefList = mlefRecordRepository.findAll();
+        List<PostMortem> pmList = postMortemRepository.findAll();
+
+        int totalCases = mlefList.size() + pmList.size();
+
+        // Demographics
+        Map<String, Integer> genderMap = new LinkedHashMap<>();
+        genderMap.put("Male", 0);
+        genderMap.put("Female", 0);
+        genderMap.put("Other / Unspecified", 0);
+
+        Map<String, Integer> ageMap = new LinkedHashMap<>();
+        ageMap.put("< 18 yrs", 0);
+        ageMap.put("18 - 35 yrs", 0);
+        ageMap.put("36 - 60 yrs", 0);
+        ageMap.put("> 60 yrs", 0);
+
+        // Bodily harm tally
+        Map<String, Integer> harmMap = new LinkedHashMap<>();
+        harmMap.put("Abrasion", 0);
+        harmMap.put("Contusion", 0);
+        harmMap.put("Laceration", 0);
+        harmMap.put("Stab", 0);
+        harmMap.put("Cut", 0);
+        harmMap.put("Fracture", 0);
+        harmMap.put("Firearm", 0);
+        harmMap.put("Burns", 0);
+        harmMap.put("Internal Injuries", 0);
+
+        // Substance stats
+        Map<String, Integer> subMap = new LinkedHashMap<>();
+        subMap.put("Sober / Negative", 0);
+        subMap.put("Alcohol Consumed / Smelling", 0);
+        subMap.put("Under Alcohol Influence", 0);
+        subMap.put("Drug Consumed", 0);
+
+        for (MlefRecord m : mlefList) {
+            Patient p = m.getPatient();
+            if (p != null) {
+                if (p.getSex() != null) {
+                    String g = p.getSex().name().equalsIgnoreCase("MALE") ? "Male" : (p.getSex().name().equalsIgnoreCase("FEMALE") ? "Female" : "Other / Unspecified");
+                    genderMap.put(g, genderMap.getOrDefault(g, 0) + 1);
+                }
+                if (p.getAge() != null) {
+                    int age = p.getAge();
+                    if (age < 18) ageMap.put("< 18 yrs", ageMap.get("< 18 yrs") + 1);
+                    else if (age <= 35) ageMap.put("18 - 35 yrs", ageMap.get("18 - 35 yrs") + 1);
+                    else if (age <= 60) ageMap.put("36 - 60 yrs", ageMap.get("36 - 60 yrs") + 1);
+                    else ageMap.put("> 60 yrs", ageMap.get("> 60 yrs") + 1);
+                }
+            }
+
+            if (Boolean.TRUE.equals(m.getInjuryAbrasion())) harmMap.put("Abrasion", harmMap.get("Abrasion") + 1);
+            if (Boolean.TRUE.equals(m.getInjuryContusion())) harmMap.put("Contusion", harmMap.get("Contusion") + 1);
+            if (Boolean.TRUE.equals(m.getInjuryLaceration())) harmMap.put("Laceration", harmMap.get("Laceration") + 1);
+            if (Boolean.TRUE.equals(m.getInjuryStab())) harmMap.put("Stab", harmMap.get("Stab") + 1);
+            if (Boolean.TRUE.equals(m.getInjuryCut())) harmMap.put("Cut", harmMap.get("Cut") + 1);
+            if (Boolean.TRUE.equals(m.getInjuryFracture())) harmMap.put("Fracture", harmMap.get("Fracture") + 1);
+            if (Boolean.TRUE.equals(m.getInjuryFirearm())) harmMap.put("Firearm", harmMap.get("Firearm") + 1);
+            if (Boolean.TRUE.equals(m.getInjuryBurns())) harmMap.put("Burns", harmMap.get("Burns") + 1);
+            if (Boolean.TRUE.equals(m.getInternalInjuries())) harmMap.put("Internal Injuries", harmMap.get("Internal Injuries") + 1);
+
+            if (m.getAlcoholInfluence() != null) {
+                switch (m.getAlcoholInfluence()) {
+                    case CONSUMED_SMELLING -> subMap.put("Alcohol Consumed / Smelling", subMap.get("Alcohol Consumed / Smelling") + 1);
+                    case UNDER_INFLUENCE -> subMap.put("Under Alcohol Influence", subMap.get("Under Alcohol Influence") + 1);
+                    default -> subMap.put("Sober / Negative", subMap.get("Sober / Negative") + 1);
+                }
+            } else {
+                subMap.put("Sober / Negative", subMap.get("Sober / Negative") + 1);
+            }
+
+            if (Boolean.TRUE.equals(m.getDrugConsumed())) {
+                subMap.put("Drug Consumed", subMap.get("Drug Consumed") + 1);
+            }
+        }
+
+        for (PostMortem pm : pmList) {
+            Deceased d = pm.getDeceased();
+            if (d != null) {
+                if (d.getSex() != null) {
+                    String g = d.getSex().name().equalsIgnoreCase("MALE") ? "Male" : (d.getSex().name().equalsIgnoreCase("FEMALE") ? "Female" : "Other / Unspecified");
+                    genderMap.put(g, genderMap.getOrDefault(g, 0) + 1);
+                }
+                if (d.getAgeWhenDied() != null) {
+                    int age = d.getAgeWhenDied();
+                    if (age < 18) ageMap.put("< 18 yrs", ageMap.get("< 18 yrs") + 1);
+                    else if (age <= 35) ageMap.put("18 - 35 yrs", ageMap.get("18 - 35 yrs") + 1);
+                    else if (age <= 60) ageMap.put("36 - 60 yrs", ageMap.get("36 - 60 yrs") + 1);
+                    else ageMap.put("> 60 yrs", ageMap.get("> 60 yrs") + 1);
+                }
+            }
+        }
+
+        Map<String, Integer> caseTypeMap = new LinkedHashMap<>();
+        caseTypeMap.put("Clinical (MLEF)", mlefList.size());
+        caseTypeMap.put("Postmortem (PMR)", pmList.size());
+
+        return ManagementReportDto.StatisticalReport.builder()
+                .totalCases(totalCases)
+                .genderDistribution(genderMap)
+                .ageDistribution(ageMap)
+                .bodilyHarmFrequencies(harmMap)
+                .substanceStats(subMap)
+                .caseTypeBreakdown(caseTypeMap)
+                .build();
     }
 }

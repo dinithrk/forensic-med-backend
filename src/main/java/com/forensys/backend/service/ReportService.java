@@ -1,6 +1,7 @@
 package com.forensys.backend.service;
 
 import com.forensys.backend.dto.ForensicReportDto;
+import com.forensys.backend.dto.ManagementReportDto;
 import com.forensys.backend.dto.ReportNotificationDto;
 import com.forensys.backend.dto.ReportStatusUpdateDto;
 import com.forensys.backend.entity.enums.ReportStatus;
@@ -16,4 +17,10 @@ public interface ReportService {
     ForensicReportDto updateReportStatus(Long id, ReportStatusUpdateDto updateDto);
     ForensicReportDto amendReport(Long id, String amendmentReason, ForensicReportDto dto);
     ReportNotificationDto getNotificationWidgetData();
+
+    ManagementReportDto.DailyReport getDailyReport(String dateStr);
+    ManagementReportDto.MonthlyReport getMonthlyReport(Integer year, Integer month);
+    ManagementReportDto.PendingReport getPendingReport();
+    ManagementReportDto.CourtReport getCourtReport();
+    ManagementReportDto.StatisticalReport getStatisticalReport();
 }

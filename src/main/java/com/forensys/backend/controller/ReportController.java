@@ -1,6 +1,7 @@
 package com.forensys.backend.controller;
 
 import com.forensys.backend.dto.ForensicReportDto;
+import com.forensys.backend.dto.ManagementReportDto;
 import com.forensys.backend.dto.ReportNotificationDto;
 import com.forensys.backend.dto.ReportStatusUpdateDto;
 import com.forensys.backend.entity.enums.ReportStatus;
@@ -76,5 +77,38 @@ public class ReportController {
     @PreAuthorize("hasAnyRole('ADMIN', 'JMO', 'MEDICAL_OFFICER', 'CLERICAL_OFFICER')")
     public ResponseEntity<ReportNotificationDto> getNotificationWidgetData() {
         return ResponseEntity.ok(reportService.getNotificationWidgetData());
+    }
+
+    @GetMapping("/analytics/daily")
+    @PreAuthorize("hasAnyRole('ADMIN', 'JMO', 'MEDICAL_OFFICER', 'CLERICAL_OFFICER')")
+    public ResponseEntity<ManagementReportDto.DailyReport> getDailyReport(
+            @RequestParam(required = false) String date) {
+        return ResponseEntity.ok(reportService.getDailyReport(date));
+    }
+
+    @GetMapping("/analytics/monthly")
+    @PreAuthorize("hasAnyRole('ADMIN', 'JMO', 'MEDICAL_OFFICER', 'CLERICAL_OFFICER')")
+    public ResponseEntity<ManagementReportDto.MonthlyReport> getMonthlyReport(
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer month) {
+        return ResponseEntity.ok(reportService.getMonthlyReport(year, month));
+    }
+
+    @GetMapping("/analytics/pending")
+    @PreAuthorize("hasAnyRole('ADMIN', 'JMO', 'MEDICAL_OFFICER', 'CLERICAL_OFFICER')")
+    public ResponseEntity<ManagementReportDto.PendingReport> getPendingReport() {
+        return ResponseEntity.ok(reportService.getPendingReport());
+    }
+
+    @GetMapping("/analytics/court")
+    @PreAuthorize("hasAnyRole('ADMIN', 'JMO', 'MEDICAL_OFFICER', 'CLERICAL_OFFICER')")
+    public ResponseEntity<ManagementReportDto.CourtReport> getCourtReport() {
+        return ResponseEntity.ok(reportService.getCourtReport());
+    }
+
+    @GetMapping("/analytics/statistics")
+    @PreAuthorize("hasAnyRole('ADMIN', 'JMO', 'MEDICAL_OFFICER', 'CLERICAL_OFFICER')")
+    public ResponseEntity<ManagementReportDto.StatisticalReport> getStatisticalReport() {
+        return ResponseEntity.ok(reportService.getStatisticalReport());
     }
 }
