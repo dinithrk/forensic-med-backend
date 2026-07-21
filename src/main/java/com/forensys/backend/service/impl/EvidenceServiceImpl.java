@@ -5,6 +5,7 @@ import com.forensys.backend.dto.ForensicSampleDto;
 import com.forensys.backend.entity.ChainOfCustody;
 import com.forensys.backend.entity.ForensicSample;
 import com.forensys.backend.mapper.EvidenceMapper;
+import com.forensys.backend.exception.ResourceNotFoundException;
 import com.forensys.backend.repository.ChainOfCustodyRepository;
 import com.forensys.backend.repository.ForensicSampleRepository;
 import com.forensys.backend.service.EvidenceService;
@@ -86,7 +87,7 @@ public class EvidenceServiceImpl implements EvidenceService {
     @Transactional
     public ChainOfCustodyDto logCustodyTransfer(Long sampleId, ChainOfCustodyDto dto) {
         ForensicSample sample = forensicSampleRepository.findById(sampleId)
-                .orElseThrow(() -> new RuntimeException(SAMPLE_NOT_FOUND_MSG));
+                .orElseThrow(() -> new ResourceNotFoundException(SAMPLE_NOT_FOUND_MSG));
         
         ChainOfCustody custody = mapper.toEntity(dto);
         custody.setForensicSample(sample);

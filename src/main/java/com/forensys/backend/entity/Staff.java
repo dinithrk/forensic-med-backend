@@ -33,4 +33,8 @@ public class Staff {
     @OneToOne
     @JoinColumn(name = "user_id", referencedColumnName = "user_id")
     private User user;
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "officer_id", referencedColumnName = "officer_id")
+    private MedicalOfficer medicalOfficer;
 }

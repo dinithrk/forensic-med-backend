@@ -12,6 +12,7 @@ import com.forensys.backend.repository.MlefRecordRepository;
 import com.forensys.backend.repository.MlrReportRepository;
 import com.forensys.backend.repository.ReferralRepository;
 import com.forensys.backend.service.ClinicalForensicService;
+import com.forensys.backend.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -69,14 +70,14 @@ public class ClinicalForensicServiceImpl implements ClinicalForensicService {
         }
 
         return mapper.toDto(mlefRecordRepository.findById(savedRecord.getMlefId())
-                .orElseThrow(() -> new RuntimeException(MLEF_NOT_FOUND_MSG)));
+                .orElseThrow(() -> new ResourceNotFoundException(MLEF_NOT_FOUND_MSG)));
     }
 
     @Override
     @Transactional(readOnly = true)
     public MlefRecordDto getMlefRecordById(Long mlefId) {
         MlefRecord mlefRecordEntity = mlefRecordRepository.findById(mlefId)
-                .orElseThrow(() -> new RuntimeException(MLEF_NOT_FOUND_MSG));
+                .orElseThrow(() -> new ResourceNotFoundException(MLEF_NOT_FOUND_MSG));
         return mapper.toDto(mlefRecordEntity);
     }
     @Override
@@ -132,7 +133,7 @@ public class ClinicalForensicServiceImpl implements ClinicalForensicService {
     @Transactional
     public MlrReportDto generateMlrReport(Long mlefId, MlrReportDto dto) {
         MlefRecord mlefRecord = mlefRecordRepository.findById(mlefId)
-                .orElseThrow(() -> new RuntimeException(MLEF_NOT_FOUND_MSG));
+                .orElseThrow(() -> new ResourceNotFoundException(MLEF_NOT_FOUND_MSG));
         
         MlrReport report = mapper.toEntity(dto);
         report.setMlefRecord(mlefRecord);
