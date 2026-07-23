@@ -35,7 +35,9 @@ public class ReportServiceImpl implements ReportService {
     private final MlefRecordRepository mlefRecordRepository;
     private final PostMortemRepository postMortemRepository;
     private final DeceasedRepository deceasedRepository;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper()
+            .registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule())
+            .disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
     @Override
     @Transactional
@@ -250,6 +252,8 @@ public class ReportServiceImpl implements ReportService {
         try {
             report.setDetailsJson(objectMapper.writeValueAsString(detailsMap));
         } catch (Exception e) {
+            System.err.println("Error serializing report details map to JSON: " + e.getMessage());
+            e.printStackTrace();
             report.setDetailsJson("{}");
         }
 

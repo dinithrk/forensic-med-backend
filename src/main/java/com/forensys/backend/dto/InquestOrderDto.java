@@ -8,6 +8,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Builder
 public class InquestOrderDto {
+    private Long inquestOrderId;
     private Long inquestNumber;
     private LocalDate dateOfInquest;
     private String inquirerFullName;

@@ -15,6 +15,8 @@ public class InquestOrder {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long inquestOrderId;
+
     private Long inquestNumber;
 
     @OneToOne(fetch = FetchType.LAZY)
